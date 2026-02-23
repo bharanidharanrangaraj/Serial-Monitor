@@ -1,36 +1,35 @@
 /* ═══════════════════════════════════════════════
-   Serial Monitor — Premium Theme Stylesheet
+   Serial Monitor — Premium Dark Theme Stylesheet
    ═══════════════════════════════════════════════ */
 
-/* ── CSS Custom Properties (Dark Theme Default) ── */
-:root,
-[data-theme="dark"] {
-    --bg-primary: #0a0e17;
-    --bg-secondary: #111827;
-    --bg-tertiary: #1a2332;
-    --bg-elevated: #1e293b;
-    --bg-hover: #243247;
-    --bg-glass: rgba(17, 24, 39, 0.85);
+/* ── CSS Custom Properties (Dark Theme) ── */
+:root {
+    --bg-primary: #111111;
+    --bg-secondary: #181818;
+    --bg-tertiary: #1e1e1e;
+    --bg-elevated: #242424;
+    --bg-hover: #2a2a2a;
+    --bg-glass: rgba(24, 24, 24, 0.92);
 
-    --text-primary: #e2e8f0;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
-    --text-inverse: #0a0e17;
+    --text-primary: #cccccc;
+    --text-secondary: #888888;
+    --text-muted: #555555;
+    --text-inverse: #111111;
 
-    --accent: #3b82f6;
-    --accent-hover: #2563eb;
-    --accent-glow: rgba(59, 130, 246, 0.3);
-    --success: #10b981;
-    --success-glow: rgba(16, 185, 129, 0.3);
-    --warning: #f59e0b;
-    --danger: #ef4444;
-    --danger-glow: rgba(239, 68, 68, 0.25);
+    --accent: #e0a458;
+    --accent-hover: #c8903e;
+    --accent-glow: rgba(224, 164, 88, 0.1);
+    --success: #66bb6a;
+    --success-glow: rgba(102, 187, 106, 0.1);
+    --warning: #ffa726;
+    --danger: #ef5350;
+    --danger-glow: rgba(239, 83, 80, 0.1);
 
-    --rx-color: #10b981;
-    --tx-color: #3b82f6;
+    --rx-color: #66bb6a;
+    --tx-color: #e0a458;
 
-    --border-color: #1e293b;
-    --border-subtle: rgba(255, 255, 255, 0.06);
+    --border-color: #262626;
+    --border-subtle: rgba(255, 255, 255, 0.04);
 
     --radius-sm: 6px;
     --radius-md: 10px;
@@ -39,8 +38,8 @@
 
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
     --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
-    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.6);
-    --shadow-glow: 0 0 20px var(--accent-glow);
+    --shadow-lg: 0 8px 28px rgba(0, 0, 0, 0.6);
+    --shadow-glow: 0 0 12px var(--accent-glow);
 
     --font-sans: 'Inter', -apple-system, sans-serif;
     --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
@@ -56,43 +55,14 @@
     --send-bar-height: 52px;
 
     /* Plotter channel colors */
-    --ch1: #3b82f6;
-    --ch2: #10b981;
-    --ch3: #f59e0b;
-    --ch4: #ef4444;
-    --ch5: #8b5cf6;
-    --ch6: #ec4899;
-    --ch7: #06b6d4;
-    --ch8: #f97316;
-}
-
-[data-theme="light"] {
-    --bg-primary: #f1f5f9;
-    --bg-secondary: #ffffff;
-    --bg-tertiary: #f8fafc;
-    --bg-elevated: #ffffff;
-    --bg-hover: #e2e8f0;
-    --bg-glass: rgba(255, 255, 255, 0.9);
-
-    --text-primary: #1e293b;
-    --text-secondary: #475569;
-    --text-muted: #94a3b8;
-    --text-inverse: #ffffff;
-
-    --accent: #2563eb;
-    --accent-hover: #1d4ed8;
-    --accent-glow: rgba(37, 99, 235, 0.2);
-    --success: #059669;
-    --success-glow: rgba(5, 150, 105, 0.2);
-    --danger: #dc2626;
-    --danger-glow: rgba(220, 38, 38, 0.15);
-
-    --border-color: #e2e8f0;
-    --border-subtle: rgba(0, 0, 0, 0.06);
-
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+    --ch1: #e0a458;
+    --ch2: #66bb6a;
+    --ch3: #ffa726;
+    --ch4: #ef5350;
+    --ch5: #ab97d4;
+    --ch6: #ec407a;
+    --ch7: #a5d6a7;
+    --ch8: #ff7043;
 }
 
 /* ── Reset & Base ── */
@@ -145,7 +115,6 @@ body {
     background: var(--bg-secondary);
     border-bottom: 1px solid var(--border-color);
     z-index: 100;
-    backdrop-filter: blur(12px);
 }
 
 .header-left,
@@ -163,7 +132,7 @@ body {
 }
 
 .logo svg {
-    color: var(--text-secondary);
+    color: var(--accent);
 }
 
 .logo h1 {
@@ -189,13 +158,13 @@ body {
 .badge-disconnected {
     background: var(--danger-glow);
     color: var(--danger);
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    border: 1px solid rgba(239, 83, 80, 0.15);
 }
 
 .badge-connected {
     background: var(--success-glow);
     color: var(--success);
-    border: 1px solid rgba(16, 185, 129, 0.3);
+    border: 1px solid rgba(102, 187, 106, 0.15);
 }
 
 
@@ -296,17 +265,18 @@ body {
 
 .btn-primary {
     background: var(--accent);
-    color: #fff;
+    color: var(--text-inverse);
+    font-weight: 600;
 }
 
 .btn-primary:hover {
     background: var(--accent-hover);
-    box-shadow: var(--shadow-glow);
 }
 
 .btn-accent {
     background: var(--accent);
-    color: #fff;
+    color: var(--text-inverse);
+    font-weight: 600;
 }
 
 .btn-accent:hover {
@@ -429,7 +399,7 @@ select.input {
 .toggle-small input:checked+span {
     background: var(--accent-glow);
     color: var(--accent);
-    border-color: rgba(59, 130, 246, 0.3);
+    border-color: rgba(224, 164, 88, 0.2);
 }
 
 /* Radio pill */

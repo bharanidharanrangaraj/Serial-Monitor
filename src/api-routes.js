@@ -6,8 +6,7 @@ const express = require('express');
 const router = express.Router();
 const serialManager = require('./serial-manager');
 const exportEngine = require('./export-engine');
-const macroEngine = require('./macro-engine');
-const profileManager = require('./profile-manager');
+
 const pluginLoader = require('./plugin-loader');
 
 // --- Serial Ports ---
@@ -70,80 +69,6 @@ router.post('/export', (req, res) => {
     }
 });
 
-// --- Macros ---
-router.get('/macros', (req, res) => {
-    res.json({ success: true, macros: macroEngine.list() });
-});
-
-router.post('/macros', (req, res) => {
-    try {
-        const macro = macroEngine.create(req.body);
-        res.json({ success: true, macro });
-    } catch (e) {
-        res.status(400).json({ success: false, error: e.message });
-    }
-});
-
-router.put('/macros/:id', (req, res) => {
-    try {
-        const macro = macroEngine.update(req.params.id, req.body);
-        res.json({ success: true, macro });
-    } catch (e) {
-        res.status(400).json({ success: false, error: e.message });
-    }
-});
-
-router.delete('/macros/:id', (req, res) => {
-    try {
-        macroEngine.remove(req.params.id);
-        res.json({ success: true });
-    } catch (e) {
-        res.status(400).json({ success: false, error: e.message });
-    }
-});
-
-router.post('/macros/:id/run', async (req, res) => {
-    try {
-        // Pass channelId so macros run on the correct connection
-        const channelId = req.body.channelId || 'default';
-        await macroEngine.run(req.params.id, serialManager, req.body.params, channelId);
-        res.json({ success: true });
-    } catch (e) {
-        res.status(400).json({ success: false, error: e.message });
-    }
-});
-
-// --- Profiles ---
-router.get('/profiles', (req, res) => {
-    res.json({ success: true, profiles: profileManager.list() });
-});
-
-router.post('/profiles', (req, res) => {
-    try {
-        const profile = profileManager.create(req.body);
-        res.json({ success: true, profile });
-    } catch (e) {
-        res.status(400).json({ success: false, error: e.message });
-    }
-});
-
-router.put('/profiles/:id', (req, res) => {
-    try {
-        const profile = profileManager.update(req.params.id, req.body);
-        res.json({ success: true, profile });
-    } catch (e) {
-        res.status(400).json({ success: false, error: e.message });
-    }
-});
-
-router.delete('/profiles/:id', (req, res) => {
-    try {
-        profileManager.remove(req.params.id);
-        res.json({ success: true });
-    } catch (e) {
-        res.status(400).json({ success: false, error: e.message });
-    }
-});
 
 // --- Plugins ---
 router.get('/plugins', (req, res) => {

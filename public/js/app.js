@@ -21,9 +21,7 @@ const App = {
         Plotter.init();
         Search.init();
         Stats.init();
-        Macros.init();
         Export.init();
-        Profiles.init();
         ProtocolViewer.init();
 
         // Connect WebSocket
