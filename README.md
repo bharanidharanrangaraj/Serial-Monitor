@@ -11,7 +11,7 @@ A professional, 100% client-side web-based serial monitor for embedded systems d
 ![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)
 
 <p align="center">
-  <img src="public/assets/Screenshot from 2026-02-23 23-09-40.png" alt="Serial Monitor Interface" width="100%">
+  <img src="assets/Screenshot from 2026-02-23 23-09-40.png" alt="Serial Monitor Interface" width="100%">
 </p>
 
 ## Features
@@ -45,14 +45,13 @@ You can run this locally using any simple HTTP server (browsers require `http://
 
 Using Python:
 ```bash
-cd public
 python3 -m http.server 8000
 # Open http://localhost:8000 in Chrome
 ```
 
 Using Node.js:
 ```bash
-npx serve public
+npx serve .
 # Open http://localhost:3000 in Chrome
 ```
 
@@ -61,24 +60,23 @@ npx serve public
 ```
 Serial-Monitor/
 ├── README.md              # Project documentation
-└── public/
-    ├── index.html         # Main interface
-    ├── css/               # Styling
-    └── js/
-        ├── serial-manager.js # Web Serial API wrapper
-        ├── app.js            # Main frontend logic
-        ├── terminal.js       # Advanced text rendering
-        ├── plotter.js        # Canvas-based charting
-        └── plugins/          # Protocol decoders
-            ├── modbus-rtu.js
-            └── slip-decoder.js
+├── index.html             # Main interface
+├── css/                   # Styling
+└── js/
+    ├── serial-manager.js  # Web Serial API wrapper
+    ├── app.js             # Main frontend logic
+    ├── terminal.js        # Advanced text rendering
+    ├── plotter.js         # Canvas-based charting
+    └── plugins/           # Protocol decoders
+        ├── modbus-rtu.js
+        └── slip-decoder.js
 ```
 
 ## Protocol Decoder Plugins
 
 Serial Monitor supports custom protocol decoders explicitly built for the browser. 
 
-To create a new decoder, create a `.js` file in `public/js/plugins/` and add the `<script>` tag to `index.html`.
+To create a new decoder, create a `.js` file in `js/plugins/` and add the `<script>` tag to `index.html`.
 
 **Plugin Format (`my-decoder.js`):**
 ```javascript
