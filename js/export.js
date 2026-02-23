@@ -21,21 +21,54 @@ const Export = {
         const format = document.querySelector('input[name="export-format"]:checked')?.value || 'txt';
         const filter = document.getElementById('export-filter').value.trim();
 
-        // Get the active tab's channelId and port name
-        const channelId = App._getActiveChannelId();
-        const activeTab = App._getActiveTab();
+        const activeTab = window.App ? window.App._getActiveTab() : null;
         const portName = (activeTab && activeTab.port) ? activeTab.port.replace(/[^a-zA-Z0-9]/g, '') : 'unknown';
 
         try {
-            const res = await fetch('/api/export', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ format, filter: filter || undefined, channelId })
-            });
+            // Get lines from terminal directly
+            let lines = window.Terminal ? window.Terminal.getLines() : [];
 
-            if (!res.ok) throw new Error('Export failed');
+            // Apply filter
+            if (filter) {
+                const isRegex = filter.startsWith('#');
+                if (isRegex) {
+                    try {
+                        const r = new RegExp(filter.substring(1), 'i');
+                        lines = lines.filter(l => r.test(l.data));
+                    } catch (e) {
+                        return alert('Invalid regex filter');
+                    }
+                } else {
+                    const term = filter.toLowerCase();
+                    lines = lines.filter(l => (l.data || '').toLowerCase().includes(term));
+                }
+            }
 
-            const blob = await res.blob();
+            let output = '';
+            let mimeType = 'text/plain';
+
+            if (format === 'json') {
+                output = JSON.stringify(lines, null, 2);
+                mimeType = 'application/json';
+            } else if (format === 'csv') {
+                output = 'Timestamp,Direction,Data\n';
+                output += lines.map(l => {
+                    const d = `"${(l.data || '').replace(/"/g, '""')}"`;
+                    return `${l.timestamp},${l.direction},${d}`;
+                }).join('\n');
+                mimeType = 'text/csv';
+            } else {
+                // txt format
+                output = lines.map(l => {
+                    const date = new Date(l.timestamp).toISOString();
+                    const dir = l.direction === 'tx' ? '▶' : '◀';
+                    return `[${date}] ${dir} ${l.data}`;
+                }).join('\n');
+                mimeType = 'text/plain';
+            }
+
+            // Create Blob and download
+            const blob = new Blob([output], { type: mimeType });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
