@@ -24,8 +24,8 @@ const App = {
         Export.init();
         ProtocolViewer.init();
 
-        // Connect WebSocket
-        this._connectWS();
+        // Initialize Web Serial Manager
+        this._setupSerialManager();
 
         // Setup UI event handlers
         this._setupConnectionUI();
@@ -34,9 +34,6 @@ const App = {
         this._setupKeyboardShortcuts();
         this._setupCollapsibles();
         this._setupTabs();
-
-        // Load port list
-        this._refreshPorts();
 
         // Expose globally for inline event handlers
         window.App = this;
@@ -48,63 +45,32 @@ const App = {
         return tab ? tab.channelId : 'default';
     },
 
-    // ═══════════ WebSocket ═══════════
-    _connectWS() {
-        const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const url = `${protocol}//${location.host}/ws`;
-
-        this.ws = new WebSocket(url);
-
-        this.ws.onopen = () => {
-            console.log('WebSocket connected');
-        };
-
-        this.ws.onclose = () => {
-            console.log('WebSocket disconnected — reconnecting in 2s...');
-            setTimeout(() => this._connectWS(), 2000);
-        };
-
-        this.ws.onerror = (err) => {
-            console.error('WebSocket error:', err);
-        };
-
-        this.ws.onmessage = (event) => {
-            try {
-                const msg = JSON.parse(event.data);
-                this._handleWSMessage(msg);
-            } catch (e) {
-                console.error('Failed to parse WS message:', e);
-            }
-        };
-    },
-
-    _handleWSMessage(msg) {
-        switch (msg.type) {
-            case 'serial:data':
-                this._onSerialData(msg.channelId, msg.payload, msg.decoded);
-                break;
-
-            case 'serial:status':
-                this._updateConnectionStatus(msg.channelId, msg);
-                break;
-
-            case 'serial:error':
-                this._onSerialError(msg.channelId, msg.error);
-                break;
-
-            case 'serial:cleared':
-                this._onSerialCleared(msg.channelId);
-                break;
-
-            case 'plugins:list':
-                this._populateDecoders(msg.plugins);
-                break;
-
-            case 'ports:updated':
-                this._onPortsUpdated(msg.ports);
-                break;
+    // ═══════════ Web Serial Integration ═══════════
+    async _setupSerialManager() {
+        if (!window.SerialManager.isSupported()) {
+            alert("Web Serial API is not supported in this browser. Please use Chrome, Edge, or Opera.");
+            return;
         }
+
+        // Hook up events
+        window.SerialManager.onData = (channelId, entry, decoded) => {
+            this._onSerialData(channelId, entry, decoded);
+        };
+        window.SerialManager.onStatus = (channelId, statusObj) => {
+            this._updateConnectionStatus(channelId, statusObj);
+        };
+        window.SerialManager.onError = (channelId, error) => {
+            this._onSerialError(channelId, error);
+        };
+        window.SerialManager.onPortsUpdated = (ports) => {
+            this._onPortsUpdated(ports);
+        };
+
+        await window.SerialManager.init();
+        this._populateDecoders();
     },
+
+
 
     // ═══════════ Serial Data (per channel) ═══════════
     _onSerialData(channelId, entry, decoded) {
@@ -171,11 +137,11 @@ const App = {
         const select = document.getElementById('port-select');
         const currentVal = select.value;
 
-        select.innerHTML = '<option value="">— Select Port —</option>';
+        select.innerHTML = '<option value="">— Select Authorized Port —</option>';
         (ports || []).forEach(p => {
             const opt = document.createElement('option');
-            opt.value = p.path;
-            opt.textContent = `${p.path} ${p.friendlyName !== p.path ? '(' + p.friendlyName + ')' : ''}`;
+            opt.value = p.id;
+            opt.textContent = `${p.vid ? 'USB Device' : 'Port'} [${p.vid || ''}:${p.pid || ''}]`;
             select.appendChild(opt);
         });
 
@@ -245,12 +211,9 @@ const App = {
 
         const tab = this.tabs[idx];
 
-        // Tell backend to disconnect and remove the channel
-        if (tab.connected && this.ws && this.ws.readyState === 1) {
-            this.ws.send(JSON.stringify({ type: 'serial:disconnect', channelId: tab.channelId }));
-        }
-        if (this.ws && this.ws.readyState === 1) {
-            this.ws.send(JSON.stringify({ type: 'channel:remove', channelId: tab.channelId }));
+        // Tell frontend manager to disconnect
+        if (tab.connected) {
+            window.SerialManager.disconnect(tab.channelId);
         }
 
         this.tabs.splice(idx, 1);
@@ -378,21 +341,15 @@ const App = {
         });
     },
 
-    // ═══════════ Connection UI (with channelId) ═══════════
     _setupConnectionUI() {
         document.getElementById('btn-connect').addEventListener('click', () => this._connect());
         document.getElementById('btn-disconnect').addEventListener('click', () => this._disconnect());
-        document.getElementById('btn-refresh-ports').addEventListener('click', () => this._refreshPorts());
+        document.getElementById('btn-request-port').addEventListener('click', () => this._requestPort());
     },
 
-    async _refreshPorts() {
-        try {
-            const res = await fetch('/api/ports');
-            const data = await res.json();
-            this._onPortsUpdated(data.ports || []);
-        } catch (e) {
-            console.error('Failed to refresh ports:', e);
-        }
+    async _requestPort() {
+        await window.SerialManager.requestNewPort();
+        // The manager will emit onPortsUpdated which we bound earlier
     },
 
     _connect() {
@@ -407,25 +364,25 @@ const App = {
         };
 
         if (!config.path) {
-            alert('Please select a serial port');
+            alert('Please select an authorized port, or click + New to authorize one.');
             return;
         }
 
-        // Send connect with this tab's channelId
-        this.ws.send(JSON.stringify({ type: 'serial:connect', channelId, config }));
+        // Connect locally via Web Serial
+        window.SerialManager.connect(channelId, config);
 
         // Update tab info
         const tab = this._getActiveTab();
         if (tab) {
             tab.port = config.path;
-            tab.name = config.path.replace(/.*[/\\]/, '');
+            tab.name = 'USB ' + config.path;
             this._renderTabs();
         }
     },
 
     _disconnect() {
         const channelId = this._getActiveChannelId();
-        this.ws.send(JSON.stringify({ type: 'serial:disconnect', channelId }));
+        window.SerialManager.disconnect(channelId);
 
         const tab = this._getActiveTab();
         if (tab) {
@@ -523,8 +480,8 @@ const App = {
         const channelId = this._getActiveChannelId();
         const mode = document.querySelector('input[name="send-mode"]:checked')?.value || 'ascii';
 
-        // Send with channelId so it goes to the correct serial port
-        this.ws.send(JSON.stringify({ type: 'serial:send', channelId, data, mode }));
+        // Send with channelId so it goes to the correct local serial port
+        window.SerialManager.send(channelId, data, mode);
 
         // Repeat mode
         const repeatCheck = document.getElementById('send-repeat');
@@ -568,7 +525,7 @@ const App = {
             if (e.ctrlKey && e.shiftKey && e.key === 'C') {
                 e.preventDefault();
                 const channelId = this._getActiveChannelId();
-                this.ws.send(JSON.stringify({ type: 'serial:clear', channelId }));
+                this._onSerialCleared(channelId); // Local clear
             }
             // Ctrl+T = New tab
             if (e.ctrlKey && e.key === 't') {
@@ -586,15 +543,17 @@ const App = {
     },
 
     // ═══════════ Protocol Decoders ═══════════
-    _populateDecoders(plugins) {
+    _populateDecoders() {
         const select = document.getElementById('decoder-select');
         select.innerHTML = '<option value="">None</option>';
-        (plugins || []).forEach(p => {
-            const opt = document.createElement('option');
-            opt.value = p.name;
-            opt.textContent = p.name;
-            select.appendChild(opt);
-        });
+        if (window.Plugins) {
+            Object.keys(window.Plugins).forEach(pluginName => {
+                const opt = document.createElement('option');
+                opt.value = pluginName;
+                opt.textContent = pluginName;
+                select.appendChild(opt);
+            });
+        }
     },
 
     // ═══════════ Helpers ═══════════
